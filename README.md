@@ -21,28 +21,6 @@ Requirements: Android Studio (or JDK 17+) and the Android SDK (platform 36).
 ./gradlew installDebug           # install on a connected device
 ```
 
-## Architecture
-```
-app/src/main/java/space/nish/stlviewer/
-├── MainActivity.kt          # entry point, handles VIEW/SEND intents
-├── model/
-│   ├── Mesh.kt              # positions-only triangle soup, bounds, volume/area
-│   └── StlParser.kt         # streaming binary + ASCII parser
-├── render/
-│   ├── ModelSurfaceView.kt  # GLSurfaceView + gestures + MSAA config
-│   ├── ModelRenderer.kt     # GLES 3.0 drawing, grid
-│   ├── OrbitCamera.kt       # Z-up orbit camera
-│   └── Shaders.kt           # GLSL ES 3.00 shaders
-└── ui/
-    ├── ViewerScreen.kt      # Compose UI
-    ├── ViewerViewModel.kt   # loading & state
-    └── theme/Theme.kt
-```
-
-**Memory-saving design:** only vertex positions are stored (36 bytes/triangle). Flat normals are derived in the
-fragment shader from screen-space derivatives, and wireframe barycentrics come from `gl_VertexID`, so no extra
-vertex attributes are needed.
-
 ## Automated Releases
 Pushing a version tag automatically triggers GitHub Actions to run tests, build the optimized release APK, and publish a GitHub Release with the APK attached:
 
