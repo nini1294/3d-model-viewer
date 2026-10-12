@@ -1,5 +1,9 @@
 # 3D Model Viewer for Android
 
+[![CI Status](https://github.com/nini1294/3d-model-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/nini1294/3d-model-viewer/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/nini1294/3d-model-viewer?color=blue)](https://github.com/nini1294/3d-model-viewer/releases)
+[![Platform](https://img.shields.io/badge/platform-Android-brightgreen)](https://developer.android.com)
+
 A fast, lightweight, **open-source** 3D model viewer for Android. No ads, no trackers, no network access.
 
 ## Features
