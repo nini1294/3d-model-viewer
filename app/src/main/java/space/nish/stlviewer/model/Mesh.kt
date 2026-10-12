@@ -1,4 +1,4 @@
-package io.github.nishant.stlviewer.model
+package space.nish.stlviewer.model
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

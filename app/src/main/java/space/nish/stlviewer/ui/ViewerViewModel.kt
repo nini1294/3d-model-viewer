@@ -1,4 +1,4 @@
-package io.github.nishant.stlviewer.ui
+package space.nish.stlviewer.ui
 
 import android.app.Application
 import android.content.ContentResolver
@@ -6,9 +6,9 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.nishant.stlviewer.model.Mesh
-import io.github.nishant.stlviewer.model.StlParser
-import io.github.nishant.stlviewer.render.RenderMode
+import space.nish.stlviewer.model.Mesh
+import space.nish.stlviewer.model.StlParser
+import space.nish.stlviewer.render.RenderMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

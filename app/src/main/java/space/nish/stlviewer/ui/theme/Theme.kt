@@ -1,4 +1,4 @@
-package io.github.nishant.stlviewer.ui.theme
+package space.nish.stlviewer.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

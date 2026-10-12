@@ -1,4 +1,4 @@
-package io.github.nishant.stlviewer.model
+package space.nish.stlviewer.model
 
 import java.io.BufferedInputStream
 import java.io.IOException

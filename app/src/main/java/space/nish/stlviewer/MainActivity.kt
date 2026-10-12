@@ -1,4 +1,4 @@
-package io.github.nishant.stlviewer
+package space.nish.stlviewer
 
 import android.content.Intent
 import android.net.Uri
@@ -8,9 +8,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.content.IntentCompat
-import io.github.nishant.stlviewer.ui.ViewerScreen
-import io.github.nishant.stlviewer.ui.ViewerViewModel
-import io.github.nishant.stlviewer.ui.theme.StlViewerTheme
+import space.nish.stlviewer.ui.ViewerScreen
+import space.nish.stlviewer.ui.ViewerViewModel
+import space.nish.stlviewer.ui.theme.StlViewerTheme
 
 class MainActivity : ComponentActivity() {
 

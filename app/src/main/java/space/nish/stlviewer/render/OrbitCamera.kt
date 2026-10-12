@@ -1,7 +1,7 @@
-package io.github.nishant.stlviewer.render
+package space.nish.stlviewer.render
 
 import android.opengl.Matrix
-import io.github.nishant.stlviewer.model.BoundingBox
+import space.nish.stlviewer.model.BoundingBox
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min

@@ -1,4 +1,4 @@
-package io.github.nishant.stlviewer.render
+package space.nish.stlviewer.render
 
 import android.opengl.GLES30
 import android.util.Log

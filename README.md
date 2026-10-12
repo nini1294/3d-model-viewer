@@ -23,7 +23,7 @@ Requirements: Android Studio (or JDK 17+) and the Android SDK (platform 36).
 
 ## Architecture
 ```
-app/src/main/java/io/github/nishant/stlviewer/
+app/src/main/java/space/nish/stlviewer/
 ├── MainActivity.kt          # entry point, handles VIEW/SEND intents
 ├── model/
 │   ├── Mesh.kt              # positions-only triangle soup, bounds, volume/area

@@ -1,4 +1,4 @@
-package io.github.nishant.stlviewer.ui
+package space.nish.stlviewer.ui
 
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -73,10 +73,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.nishant.stlviewer.R
-import io.github.nishant.stlviewer.model.Mesh
-import io.github.nishant.stlviewer.render.ModelSurfaceView
-import io.github.nishant.stlviewer.render.RenderMode
+import space.nish.stlviewer.R
+import space.nish.stlviewer.model.Mesh
+import space.nish.stlviewer.render.ModelSurfaceView
+import space.nish.stlviewer.render.RenderMode
 import java.text.NumberFormat
 import java.util.Locale
 

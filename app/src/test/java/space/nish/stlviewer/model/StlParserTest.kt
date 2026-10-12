@@ -1,6 +1,6 @@
-package io.github.nishant.stlviewer.model
+package space.nish.stlviewer.model
 
-import io.github.nishant.stlviewer.render.ModelRenderer
+import space.nish.stlviewer.render.ModelRenderer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue

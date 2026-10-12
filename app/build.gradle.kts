@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "io.github.nishant.stlviewer"
+    namespace = "space.nish.stlviewer"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.nishant.stlviewer"
+        applicationId = "space.nish.stlviewer"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

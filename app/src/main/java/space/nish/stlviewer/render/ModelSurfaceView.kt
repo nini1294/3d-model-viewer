@@ -1,4 +1,4 @@
-package io.github.nishant.stlviewer.render
+package space.nish.stlviewer.render
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -9,7 +9,7 @@ import android.os.Looper
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
-import io.github.nishant.stlviewer.model.Mesh
+import space.nish.stlviewer.model.Mesh
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLDisplay
