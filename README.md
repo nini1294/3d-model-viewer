@@ -7,7 +7,7 @@
 A fast, lightweight, **open-source** 3D model viewer for Android. No ads, no trackers, no network access.
 
 ## Features
-- Opens **binary and ASCII STL** (including binary files whose header starts with `solid`, and truncated files)
+- Opens **binary and ASCII STL** and **Wavefront OBJ** (`.obj`) models (including quads and n-gons)
 - Smooth rendering of multi-million-triangle models with OpenGL ES 3.0 and 4× MSAA
 - Render modes: **Solid**, **Solid + edges**, **Wireframe**
 - Touch controls: drag to orbit · two fingers to pan · pinch to zoom · double-tap to reset
@@ -36,7 +36,7 @@ git push origin v0.1.0
 ## Roadmap
 
 ### 📦 Additional Formats
-- [ ] **Wavefront OBJ (`.obj`)**: streaming parser for vertex and face definitions
+- [x] **Wavefront OBJ (`.obj`)**: streaming parser for vertex and face definitions
 - [ ] **3D Manufacturing Format (`.3mf`)**: ZIP archive extraction + XML mesh reading (modern 3D printing standard)
 - [ ] **Polygon File Format (`.ply`)**: binary and ASCII mesh parsing
 - [ ] **glTF / GLB (`.gltf`, `.glb`)**: modern real-time 3D asset support
@@ -48,6 +48,8 @@ git push origin v0.1.0
 - [ ] **Mesh Diagnostics**: detect and warn about non-manifold edges, holes, or inverted/flipped face normals
 - [ ] **Recent Files**: quick-access list of recently opened models with persisted document URI permissions
 - [ ] **Snapshot & Share**: render high-res transparent or framed screenshots directly to the system Share sheet
+
+### 🚀 Distribution & Packaging
 - [ ] **F-Droid Packaging**: reproducible build metadata and fastlane listing for F-Droid inclusion
 
 ## Contributing

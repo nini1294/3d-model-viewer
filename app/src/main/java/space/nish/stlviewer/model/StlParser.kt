@@ -6,7 +6,9 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class StlParseException(message: String, cause: Throwable? = null) : IOException(message, cause)
+open class ModelParseException(message: String, cause: Throwable? = null) : IOException(message, cause)
+
+class StlParseException(message: String, cause: Throwable? = null) : ModelParseException(message, cause)
 
 /**
  * Streaming parser for binary and ASCII STL files.
@@ -132,6 +134,7 @@ object StlParser {
                 vertexIndex = 0
             }
         }
+        if (builder.triangleCount == 0) throw StlParseException("The file does not contain any triangles")
         return builder.build()
     }
 

@@ -88,7 +88,7 @@ internal class MeshBuilder(initialTriangleCapacity: Int) {
     }
 
     fun build(): Mesh {
-        if (triangleCount == 0) throw StlParseException("The file does not contain any triangles")
+        if (triangleCount == 0) throw ModelParseException("The file does not contain any triangles")
         val data = buffer.duplicate()
         data.flip()
         val bounds = BoundingBox(minX, minY, minZ, maxX, maxY, maxZ)

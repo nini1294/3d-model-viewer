@@ -34,6 +34,8 @@
                 <data android:mimeType="model/stl" />
                 <data android:mimeType="model/x.stl-binary" />
                 <data android:mimeType="model/x.stl-ascii" />
+                <data android:mimeType="model/obj" />
+                <data android:mimeType="model/wavefront-obj" />
                 <data android:mimeType="application/sla" />
                 <data android:mimeType="application/vnd.ms-pki.stl" />
                 <data android:mimeType="application/x-navistyle" />
@@ -60,6 +62,10 @@
                 <data android:pathPattern=".*\\.STL" />
                 <data android:pathPattern=".*\\..*\\.stl" />
                 <data android:pathPattern=".*\\..*\\.STL" />
+                <data android:pathPattern=".*\\.obj" />
+                <data android:pathPattern=".*\\.OBJ" />
+                <data android:pathPattern=".*\\..*\\.obj" />
+                <data android:pathPattern=".*\\..*\\.OBJ" />
             </intent-filter>
 
             <!-- Share sheet. -->
@@ -69,6 +75,8 @@
                 <data android:mimeType="model/stl" />
                 <data android:mimeType="model/x.stl-binary" />
                 <data android:mimeType="model/x.stl-ascii" />
+                <data android:mimeType="model/obj" />
+                <data android:mimeType="model/wavefront-obj" />
                 <data android:mimeType="application/sla" />
                 <data android:mimeType="application/vnd.ms-pki.stl" />
                 <data android:mimeType="application/octet-stream" />

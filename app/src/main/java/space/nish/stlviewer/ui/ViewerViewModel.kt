@@ -7,7 +7,7 @@ import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import space.nish.stlviewer.model.Mesh
-import space.nish.stlviewer.model.StlParser
+import space.nish.stlviewer.model.ModelParser
 import space.nish.stlviewer.render.RenderMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +64,7 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
                     val (name, size) = queryNameAndSize(resolver, uri)
                     _state.update { it.copy(loadingName = name) }
                     val start = System.nanoTime()
-                    val mesh = resolver.openInputStream(uri)?.use { StlParser.parse(it, size) }
+                    val mesh = resolver.openInputStream(uri)?.use { ModelParser.parse(it, name, size) }
                         ?: throw IOException("Unable to open the file")
                     LoadedModel(mesh, name, size, (System.nanoTime() - start) / 1_000_000)
                 }
@@ -122,6 +122,6 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
                 size = runCatching { resolver.openAssetFileDescriptor(uri, "r")?.use { it.length } }.getOrNull() ?: -1L
             }
         }
-        return (name ?: uri.lastPathSegment?.substringAfterLast('/') ?: "model.stl") to size
+        return (name ?: uri.lastPathSegment?.substringAfterLast('/') ?: "model") to size
     }
 }
