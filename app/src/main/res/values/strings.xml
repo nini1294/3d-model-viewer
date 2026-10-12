@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">STL Viewer</string>
+    <string name="app_name">3D Model Viewer</string>
     <string name="open_file">Open STL file</string>
     <string name="model_info">Model info</string>
     <string name="more_options">More options</string>

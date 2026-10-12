@@ -1,6 +1,6 @@
-# STL Viewer for Android
+# 3D Model Viewer for Android
 
-A fast, lightweight, **open-source** 3D viewer for STL files on Android. No ads, no trackers, no network access.
+A fast, lightweight, **open-source** 3D model viewer for Android. No ads, no trackers, no network access.
 
 ## Features
 - Opens **binary and ASCII STL** (including binary files whose header starts with `solid`, and truncated files)

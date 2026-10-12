@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "stl-viewer"
+rootProject.name = "3d-model-viewer"
 include(":app")
