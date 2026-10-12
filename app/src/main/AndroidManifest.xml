@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature
+        android:glEsVersion="0x00030000"
+        android:required="true" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.StlViewer">
+
+        <!-- configChanges: avoid tearing down the GL context (and re-uploading the model) on rotation. -->
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|density"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- "Open with" for files that carry an STL MIME type. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="model/stl" />
+                <data android:mimeType="model/x.stl-binary" />
+                <data android:mimeType="model/x.stl-ascii" />
+                <data android:mimeType="application/sla" />
+                <data android:mimeType="application/vnd.ms-pki.stl" />
+                <data android:mimeType="application/x-navistyle" />
+            </intent-filter>
+
+            <!-- Many file managers report STL as a generic binary; the parser validates the content. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+
+            <!-- Match by extension for file managers that pass file paths without a MIME type. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.stl" />
+                <data android:pathPattern=".*\\.STL" />
+                <data android:pathPattern=".*\\..*\\.stl" />
+                <data android:pathPattern=".*\\..*\\.STL" />
+            </intent-filter>
+
+            <!-- Share sheet. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="model/stl" />
+                <data android:mimeType="model/x.stl-binary" />
+                <data android:mimeType="model/x.stl-ascii" />
+                <data android:mimeType="application/sla" />
+                <data android:mimeType="application/vnd.ms-pki.stl" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
