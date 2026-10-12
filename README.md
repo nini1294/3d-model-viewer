@@ -50,7 +50,7 @@ git push origin v0.1.0
 - [ ] **Snapshot & Share**: render high-res transparent or framed screenshots directly to the system Share sheet
 
 ### 🚀 Distribution & Packaging
-- [ ] **F-Droid Packaging**: reproducible build metadata and fastlane listing for F-Droid inclusion
+- [x] **F-Droid Packaging**: reproducible build metadata, fastlane listing, and F-Droid recipe
 
 ## Contributing
 Issues and pull requests are welcome! Please run `./gradlew testDebugUnitTest` before submitting.

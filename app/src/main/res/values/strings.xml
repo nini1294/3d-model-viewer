@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">3D Model Viewer</string>
-    <string name="open_file">Open STL file</string>
+    <string name="open_file">Open 3D model</string>
     <string name="model_info">Model info</string>
     <string name="more_options">More options</string>
     <string name="reset_view">Reset view</string>
@@ -9,7 +9,7 @@
     <string name="model_color">Model colour</string>
     <string name="close_model">Close model</string>
     <string name="empty_title">No model loaded</string>
-    <string name="empty_body">Open an STL file from your device, or use \"Open with\" / \"Share\" from any file manager.</string>
+    <string name="empty_body">Open an STL or OBJ file from your device, or use \"Open with\" / \"Share\" from any file manager.</string>
     <string name="loading">Loading…</string>
     <string name="loading_named">Loading %1$s…</string>
     <string name="mode_solid">Solid</string>
@@ -21,6 +21,6 @@
     <string name="info_area">Surface area</string>
     <string name="info_file_size">File size</string>
     <string name="info_load_time">Load time</string>
-    <string name="info_units_note">STL files are unitless; values assume millimetres. Volume is only accurate for watertight meshes.</string>
+    <string name="info_units_note">3D models are unitless; values assume millimetres. Volume is only accurate for watertight meshes.</string>
     <string name="gestures_hint">Drag to rotate · two fingers to pan · pinch to zoom · double-tap to reset</string>
 </resources>

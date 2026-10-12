@@ -1,0 +1,12 @@
+A fast, lightweight, open-source 3D model viewer for Android. Zero trackers, no ads, and no internet permissions required.
+
+Key Features:
+* Binary & ASCII STL: opens complex 3D meshes smoothly, including CAD exports with custom headers or truncated files.
+* Wavefront OBJ: streams geometric vertices and faces, supporting triangles, quads, and convex n-gons.
+* Smooth OpenGL ES 3.0 Rendering: 4x MSAA anti-aliasing with flat screen-space derivative normals for high fidelity and reduced memory usage.
+* Visualization Modes: Solid shaded, Solid + Edges, and Wireframe views.
+* Responsive Touch Controls: 1-finger orbit rotation, 2-finger pan, pinch-to-zoom, and double-tap to reset camera.
+* Adaptive Ground Grid: dynamic build-plate grid that automatically adjusts spacing to match model dimensions.
+* Physical Model Inspection: view triangle count, dimensions in mm, volume in cm³, surface area in cm², file size, and parse time.
+* Seamless Integration: open models via the built-in document picker, "Open with" in any file manager, or system Share sheet.
+* Material You Design: dynamic theming with dark and light mode support.

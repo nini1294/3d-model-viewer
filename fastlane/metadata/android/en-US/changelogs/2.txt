@@ -1,0 +1,5 @@
+* Added support for Wavefront OBJ (.obj) models
+* Support for triangles, quads, and arbitrary convex n-gons (fan triangulation)
+* Streaming parser with zero line allocations for minimal memory overhead
+* Support for negative relative indices, vertex textures, and normals in faces
+* Updated model info sheet and empty state descriptions

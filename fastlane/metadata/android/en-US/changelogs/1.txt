@@ -1,0 +1,5 @@
+* Initial release of 3D Model Viewer
+* Support for binary and ASCII STL models
+* OpenGL ES 3.0 rendering with Solid, Edges, and Wireframe modes
+* Physical model metrics: triangle count, dimensions, volume, surface area
+* System dark mode and Material You dynamic color themes
