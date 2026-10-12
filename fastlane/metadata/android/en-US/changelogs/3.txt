@@ -1,0 +1,3 @@
+* Full Wavefront OBJ (.obj) & STL support
+* F-Droid metadata and Fastlane packaging structure
+* UI refinements and updated 3D model strings
