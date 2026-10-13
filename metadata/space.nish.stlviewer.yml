@@ -1,54 +1,26 @@
 Categories:
   - Graphics
 License: Apache-2.0
+AuthorName: nini1294
 WebSite: https://github.com/nini1294/3d-model-viewer
 SourceCode: https://github.com/nini1294/3d-model-viewer
 IssueTracker: https://github.com/nini1294/3d-model-viewer/issues
 Changelog: https://github.com/nini1294/3d-model-viewer/releases
 
 AutoName: 3D Model Viewer
-Summary: Fast, lightweight 3D STL & OBJ model viewer for Android
-
-Description: |-
-  A fast, lightweight, open-source 3D model viewer for Android.
-  Zero trackers, no ads, and no internet permissions required.
-
-  Features:
-  * Binary and ASCII STL support (including custom CAD headers and truncated files)
-  * Wavefront OBJ support (triangles, quads, and convex n-gons)
-  * Hardware-accelerated OpenGL ES 3.0 rendering with 4x MSAA
-  * Solid shaded, Solid + Edges, and Wireframe visualization modes
-  * Intuitive multi-touch camera: 1-finger orbit, 2-finger pan, pinch zoom
-  * Dynamic adaptive build-plate ground grid
-  * Mesh physical stats: triangle count, bounding dimensions (mm), volume (cm³), and surface area (cm²)
-  * Dark theme and Material You dynamic color themes
 
 RepoType: git
 Repo: https://github.com/nini1294/3d-model-viewer.git
 
 Builds:
-  - versionName: 0.1.0
-    versionCode: 1
-    commit: v0.1.0
-    subdir: app
-    gradle:
-      - yes
-
-  - versionName: 0.2.0
-    versionCode: 2
-    commit: v0.2.0
-    subdir: app
-    gradle:
-      - yes
-
   - versionName: 0.3.0
     versionCode: 3
-    commit: v0.3.0
+    commit: bb9231a057ea59fb18882858d08fe172cfbb9a22
     subdir: app
     gradle:
       - yes
 
-AutoUpdateMode: Version v%v
+AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 0.3.0
 CurrentVersionCode: 3
