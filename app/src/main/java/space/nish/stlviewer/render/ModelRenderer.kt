@@ -55,6 +55,13 @@ class ModelRenderer(private val camera: OrbitCamera) : GLSurfaceView.Renderer {
     private var gridMinorVertices = 0
     private var gridMajorVertices = 0
 
+    private var measureVao = 0
+    private var measureVbo = 0
+    private var measureVertexCount = 0
+    private var measurePoint1: FloatArray? = null
+    private var measurePoint2: FloatArray? = null
+    private var measureDirty = false
+
     private val view = FloatArray(16)
     private val projection = FloatArray(16)
     private val mvp = FloatArray(16)
@@ -67,10 +74,19 @@ class ModelRenderer(private val camera: OrbitCamera) : GLSurfaceView.Renderer {
         }
     }
 
+    fun setMeasurement(p1: FloatArray?, p2: FloatArray?) {
+        synchronized(lock) {
+            measurePoint1 = p1?.clone()
+            measurePoint2 = p2?.clone()
+            measureDirty = true
+        }
+    }
+
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         // A new EGL context invalidates every previous GL object handle.
         meshVao = 0; meshVbo = 0; meshVertexCount = 0
         gridVao = 0; gridVbo = 0; gridMinorVertices = 0; gridMajorVertices = 0
+        measureVao = 0; measureVbo = 0; measureVertexCount = 0
 
         meshProgram = GlUtil.createProgram(Shaders.MESH_VERTEX, Shaders.MESH_FRAGMENT)
         uMeshView = GLES30.glGetUniformLocation(meshProgram, "uView")
@@ -88,7 +104,10 @@ class ModelRenderer(private val camera: OrbitCamera) : GLSurfaceView.Renderer {
         GLES30.glDisable(GLES30.GL_CULL_FACE) // STL winding is often unreliable: render both sides
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA)
 
-        synchronized(lock) { meshDirty = true }
+        synchronized(lock) {
+            meshDirty = true
+            measureDirty = true
+        }
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -98,6 +117,7 @@ class ModelRenderer(private val camera: OrbitCamera) : GLSurfaceView.Renderer {
 
     override fun onDrawFrame(gl: GL10?) {
         uploadMeshIfDirty()
+        uploadMeasurementIfDirty()
 
         val bg = backgroundColor
         GLES30.glClearColor(bg[0], bg[1], bg[2], 1f)
@@ -108,6 +128,7 @@ class ModelRenderer(private val camera: OrbitCamera) : GLSurfaceView.Renderer {
 
         if (meshVertexCount > 0) drawMesh()
         if (showGrid && gridMinorVertices + gridMajorVertices > 0) drawGrid()
+        if (measureVertexCount > 0) drawMeasurement()
     }
 
     private fun drawMesh() {
@@ -176,6 +197,57 @@ class ModelRenderer(private val camera: OrbitCamera) : GLSurfaceView.Renderer {
         gridMajorVertices = grid.size / 3 - minorVertices
     }
 
+    private fun uploadMeasurementIfDirty() {
+        val p1: FloatArray?
+        val p2: FloatArray?
+        val radius: Float
+        synchronized(lock) {
+            if (!measureDirty) return
+            measureDirty = false
+            p1 = measurePoint1
+            p2 = measurePoint2
+            radius = mesh?.bounds?.radius ?: 50f
+        }
+
+        deleteMeasureBuffers()
+        if (p1 == null && p2 == null) return
+
+        val geometry = buildMeasurementGeometry(p1, p2, radius)
+        if (geometry.isEmpty()) return
+
+        val ids = IntArray(1)
+        GLES30.glGenVertexArrays(1, ids, 0)
+        measureVao = ids[0]
+        GLES30.glGenBuffers(1, ids, 0)
+        measureVbo = ids[0]
+
+        val buffer = java.nio.ByteBuffer.allocateDirect(geometry.size * 4)
+            .order(java.nio.ByteOrder.nativeOrder()).asFloatBuffer().put(geometry).apply { position(0) }
+        uploadPositions(measureVao, measureVbo, buffer, geometry.size / 3)
+        measureVertexCount = geometry.size / 3
+    }
+
+    private fun drawMeasurement() {
+        GLES30.glUseProgram(lineProgram)
+        GLES30.glUniformMatrix4fv(uLineMvp, 1, false, mvp, 0)
+        GLES30.glEnable(GLES30.GL_BLEND)
+        GLES30.glBindVertexArray(measureVao)
+
+        // Pass 1: Semi-transparent guide through the model (X-ray pass)
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST)
+        GLES30.glUniform4f(uLineColor, 1.0f, 0.72f, 0.12f, 0.35f)
+        GLES30.glDrawArrays(GLES30.GL_LINES, 0, measureVertexCount)
+
+        // Pass 2: Solid bright line in front of the model
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST)
+        GLES30.glDepthMask(true)
+        GLES30.glUniform4f(uLineColor, 1.0f, 0.76f, 0.15f, 1.0f)
+        GLES30.glDrawArrays(GLES30.GL_LINES, 0, measureVertexCount)
+
+        GLES30.glBindVertexArray(0)
+        GLES30.glDisable(GLES30.GL_BLEND)
+    }
+
     private fun uploadPositions(vao: Int, vbo: Int, data: java.nio.FloatBuffer, vertexCount: Int) {
         GLES30.glBindVertexArray(vao)
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo)
@@ -191,6 +263,13 @@ class ModelRenderer(private val camera: OrbitCamera) : GLSurfaceView.Renderer {
         if (meshVao != 0 || gridVao != 0) GLES30.glDeleteVertexArrays(2, intArrayOf(meshVao, gridVao), 0)
         meshVao = 0; meshVbo = 0; meshVertexCount = 0
         gridVao = 0; gridVbo = 0; gridMinorVertices = 0; gridMajorVertices = 0
+        deleteMeasureBuffers()
+    }
+
+    private fun deleteMeasureBuffers() {
+        if (measureVbo != 0) GLES30.glDeleteBuffers(1, intArrayOf(measureVbo), 0)
+        if (measureVao != 0) GLES30.glDeleteVertexArrays(1, intArrayOf(measureVao), 0)
+        measureVao = 0; measureVbo = 0; measureVertexCount = 0
     }
 
     companion object {
@@ -235,6 +314,84 @@ class ModelRenderer(private val camera: OrbitCamera) : GLSurfaceView.Renderer {
                 else -> 10f
             }
             return nice * magnitude
+        }
+
+        internal fun buildMeasurementGeometry(p1: FloatArray?, p2: FloatArray?, radius: Float): FloatArray {
+            val list = ArrayList<Float>()
+            val s = if (radius > 0f && radius.isFinite()) max(radius * 0.025f, 0.5f) else 1f
+
+            fun addPointMarker(p: FloatArray) {
+                val x = p[0]; val y = p[1]; val z = p[2]
+                // 3-axis crosshair
+                list.addAll(listOf(
+                    x - s, y, z,   x + s, y, z,
+                    x, y - s, z,   x, y + s, z,
+                    x, y, z - s,   x, y, z + s
+                ))
+                // Octahedron diamond edges
+                val top = floatArrayOf(x, y, z + s)
+                val bot = floatArrayOf(x, y, z - s)
+                val r0 = floatArrayOf(x + s, y, z)
+                val r1 = floatArrayOf(x, y + s, z)
+                val r2 = floatArrayOf(x - s, y, z)
+                val r3 = floatArrayOf(x, y - s, z)
+                val ring = arrayOf(r0, r1, r2, r3)
+
+                for (i in 0 until 4) {
+                    val cur = ring[i]
+                    val nxt = ring[(i + 1) % 4]
+                    list.addAll(listOf(top[0], top[1], top[2], cur[0], cur[1], cur[2]))
+                    list.addAll(listOf(bot[0], bot[1], bot[2], cur[0], cur[1], cur[2]))
+                    list.addAll(listOf(cur[0], cur[1], cur[2], nxt[0], nxt[1], nxt[2]))
+                }
+            }
+
+            p1?.let { addPointMarker(it) }
+            p2?.let { addPointMarker(it) }
+
+            if (p1 != null && p2 != null) {
+                // Connecting line
+                list.addAll(listOf(
+                    p1[0], p1[1], p1[2],
+                    p2[0], p2[1], p2[2]
+                ))
+
+                // End-cap tick marks
+                val dx = p2[0] - p1[0]
+                val dy = p2[1] - p1[1]
+                val dz = p2[2] - p1[2]
+                val len = kotlin.math.sqrt(dx * dx + dy * dy + dz * dz)
+                if (len > 1e-4f) {
+                    val ndx = dx / len
+                    val ndy = dy / len
+                    val ndz = dz / len
+                    val ux: Float; val uy: Float; val uz: Float
+                    if (kotlin.math.abs(ndz) < 0.9f) {
+                        val cx = -ndy; val cy = ndx; val cz = 0f
+                        val clen = kotlin.math.sqrt(cx * cx + cy * cy)
+                        ux = cx / clen; uy = cy / clen; uz = 0f
+                    } else {
+                        val cx = ndz; val cy = 0f; val cz = -ndx
+                        val clen = kotlin.math.sqrt(cx * cx + cz * cz)
+                        ux = cx / clen; uy = 0f; uz = cz / clen
+                    }
+                    val capS = s * 0.75f
+                    // Ticks at p1
+                    list.addAll(listOf(
+                        p1[0] - ux * capS, p1[1] - uy * capS, p1[2] - uz * capS,
+                        p1[0] + ux * capS, p1[1] + uy * capS, p1[2] + uz * capS
+                    ))
+                    // Ticks at p2
+                    list.addAll(listOf(
+                        p2[0] - ux * capS, p2[1] - uy * capS, p2[2] - uz * capS,
+                        p2[0] + ux * capS, p2[1] + uy * capS, p2[2] + uz * capS
+                    ))
+                }
+            }
+
+            val out = FloatArray(list.size)
+            list.forEachIndexed { i, f -> out[i] = f }
+            return out
         }
     }
 }

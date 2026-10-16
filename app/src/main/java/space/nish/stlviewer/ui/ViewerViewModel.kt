@@ -44,6 +44,24 @@ data class LoadedModel(
     val rawUri: String? get() = locationInfo.rawUri
 }
 
+data class Point3D(val x: Float, val y: Float, val z: Float) {
+    fun toFloatArray(): FloatArray = floatArrayOf(x, y, z)
+}
+
+data class Measurement(
+    val point1: Point3D,
+    val point2: Point3D,
+) {
+    val deltaX: Float get() = kotlin.math.abs(point2.x - point1.x)
+    val deltaY: Float get() = kotlin.math.abs(point2.y - point1.y)
+    val deltaZ: Float get() = kotlin.math.abs(point2.z - point1.z)
+    val distance: Float get() = kotlin.math.sqrt(
+        (point2.x - point1.x) * (point2.x - point1.x) +
+        (point2.y - point1.y) * (point2.y - point1.y) +
+        (point2.z - point1.z) * (point2.z - point1.z)
+    )
+}
+
 data class ViewerUiState(
     val model: LoadedModel? = null,
     val loading: Boolean = false,
@@ -53,7 +71,15 @@ data class ViewerUiState(
     val renderMode: RenderMode = RenderMode.SHADED,
     val showGrid: Boolean = true,
     val modelColor: ModelColor = ModelColor.Blue,
-)
+    val isMeasuring: Boolean = false,
+    val measurePoint1: Point3D? = null,
+    val measurePoint2: Point3D? = null,
+) {
+    val measurement: Measurement?
+        get() = if (measurePoint1 != null && measurePoint2 != null) {
+            Measurement(measurePoint1, measurePoint2)
+        } else null
+}
 
 class ViewerViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -68,7 +94,17 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
     fun load(uri: Uri) {
         loadJob?.cancel()
         val resolver = getApplication<Application>().contentResolver
-        _state.update { it.copy(loading = true, loadingName = null, error = null, infoMessage = null) }
+        _state.update {
+            it.copy(
+                loading = true,
+                loadingName = null,
+                error = null,
+                infoMessage = null,
+                isMeasuring = false,
+                measurePoint1 = null,
+                measurePoint2 = null,
+            )
+        }
         loadJob = viewModelScope.launch {
             try {
                 val loaded = withContext(Dispatchers.IO) {
@@ -151,10 +187,43 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setModelColor(color: ModelColor) = _state.update { it.copy(modelColor = color) }
 
+    fun toggleMeasureMode() {
+        _state.update {
+            val next = !it.isMeasuring
+            it.copy(
+                isMeasuring = next,
+                measurePoint1 = if (next) it.measurePoint1 else null,
+                measurePoint2 = if (next) it.measurePoint2 else null,
+            )
+        }
+    }
+
+    fun onMeasurePointPicked(x: Float, y: Float, z: Float) {
+        val newPoint = Point3D(x, y, z)
+        _state.update { current ->
+            when {
+                current.measurePoint1 == null -> current.copy(measurePoint1 = newPoint)
+                current.measurePoint2 == null -> current.copy(measurePoint2 = newPoint)
+                else -> current.copy(measurePoint1 = newPoint, measurePoint2 = null)
+            }
+        }
+    }
+
+    fun clearMeasurement() {
+        _state.update { it.copy(measurePoint1 = null, measurePoint2 = null) }
+    }
+
     fun closeModel() {
         loadJob?.cancel()
         if (cacheModelFile.exists()) cacheModelFile.delete()
-        _state.update { it.copy(model = null) }
+        _state.update {
+            it.copy(
+                model = null,
+                isMeasuring = false,
+                measurePoint1 = null,
+                measurePoint2 = null,
+            )
+        }
     }
 
     private fun queryNameAndSize(resolver: ContentResolver, uri: Uri): Pair<String, Long> {

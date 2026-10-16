@@ -1,0 +1,3 @@
+* Interactive 3D measurement tool with vertex snapping
+* Real-time distance and coordinate deltas (ΔX, ΔY, ΔZ)
+* Copy measurement summary directly to clipboard

@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Straighten
 import androidx.compose.material.icons.outlined.ViewInAr
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -44,6 +45,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -117,6 +120,7 @@ fun ViewerScreen(viewModel: ViewerViewModel) {
     var showLocation by rememberSaveable { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
     val dark = isSystemInDarkTheme()
     val background = if (dark) DarkViewportBackground else LightViewportBackground
 
@@ -190,13 +194,38 @@ fun ViewerScreen(viewModel: ViewerViewModel) {
                     modelColor = state.modelColor.rgb,
                     background = background,
                     darkBackground = dark,
+                    isMeasuring = state.isMeasuring,
+                    measurePoint1 = state.measurePoint1,
+                    measurePoint2 = state.measurePoint2,
+                    onPointPicked = { pt -> viewModel.onMeasurePointPicked(pt[0], pt[1], pt[2]) },
                     controller = controller,
                     onRenderError = viewModel::reportError,
                     modifier = Modifier.fillMaxSize(),
                 )
+                MeasurementOverlay(
+                    isMeasuring = state.isMeasuring,
+                    measurePoint1 = state.measurePoint1,
+                    measurePoint2 = state.measurePoint2,
+                    measurement = state.measurement,
+                    onClear = viewModel::clearMeasurement,
+                    onExit = viewModel::toggleMeasureMode,
+                    onCopy = { summary ->
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Measurement", summary))
+                        scope.launch {
+                            snackbarHostState.showSnackbar(context.getString(R.string.measure_copied))
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(padding)
+                        .padding(top = 8.dp),
+                )
                 BottomControls(
                     renderMode = state.renderMode,
+                    isMeasuring = state.isMeasuring,
                     onRenderMode = viewModel::setRenderMode,
+                    onToggleMeasure = viewModel::toggleMeasureMode,
                     onResetView = controller::resetCamera,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -251,12 +280,17 @@ private fun ModelViewport(
     modelColor: FloatArray,
     background: FloatArray,
     darkBackground: Boolean,
+    isMeasuring: Boolean,
+    measurePoint1: Point3D?,
+    measurePoint2: Point3D?,
+    onPointPicked: (FloatArray) -> Unit,
     controller: ViewportController,
     onRenderError: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentOnError by rememberUpdatedState(onRenderError)
+    val currentOnPointPicked by rememberUpdatedState(onPointPicked)
     var surfaceView by remember { mutableStateOf<ModelSurfaceView?>(null) }
 
     AndroidView(
@@ -273,6 +307,12 @@ private fun ModelViewport(
             view.setDisplayMode(renderMode)
             view.setShowGrid(showGrid)
             view.setMesh(mesh)
+            view.isMeasureMode = isMeasuring
+            view.onPointPicked = { currentOnPointPicked(it) }
+            view.setMeasurementPoints(
+                measurePoint1?.toFloatArray(),
+                measurePoint2?.toFloatArray()
+            )
         },
         onRelease = { view ->
             if (controller.view === view) controller.view = null
@@ -294,11 +334,177 @@ private fun ModelViewport(
     }
 }
 
+@Composable
+private fun MeasurementOverlay(
+    isMeasuring: Boolean,
+    measurePoint1: Point3D?,
+    measurePoint2: Point3D?,
+    measurement: Measurement?,
+    onClear: () -> Unit,
+    onExit: () -> Unit,
+    onCopy: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (!isMeasuring) return
+
+    Box(modifier = modifier) {
+        if (measurement != null) {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
+                tonalElevation = 6.dp,
+                shadowElevation = 8.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Outlined.Straighten,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.measure_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                        Row {
+                            val formattedDistance = String.format(Locale.getDefault(), "%.2f", measurement.distance)
+                            val formattedDx = String.format(Locale.getDefault(), "%.2f", measurement.deltaX)
+                            val formattedDy = String.format(Locale.getDefault(), "%.2f", measurement.deltaY)
+                            val formattedDz = String.format(Locale.getDefault(), "%.2f", measurement.deltaZ)
+                            val copySummary = "Distance: $formattedDistance mm (ΔX: $formattedDx, ΔY: $formattedDy, ΔZ: $formattedDz mm)"
+
+                            IconButton(onClick = { onCopy(copySummary) }, modifier = Modifier.size(36.dp)) {
+                                Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.copy_path), modifier = Modifier.size(18.dp))
+                            }
+                            IconButton(onClick = onClear, modifier = Modifier.size(36.dp)) {
+                                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.measure_clear), modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = String.format(Locale.getDefault(), "%.2f mm", measurement.distance),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        DeltaBadge(label = "ΔX", value = String.format(Locale.getDefault(), "%.2f mm", measurement.deltaX), modifier = Modifier.weight(1f))
+                        DeltaBadge(label = "ΔY", value = String.format(Locale.getDefault(), "%.2f mm", measurement.deltaY), modifier = Modifier.weight(1f))
+                        DeltaBadge(label = "ΔZ", value = String.format(Locale.getDefault(), "%.2f mm", measurement.deltaZ), modifier = Modifier.weight(1f))
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        OutlinedButton(onClick = onClear, modifier = Modifier.height(36.dp)) {
+                            Text(stringResource(R.string.measure_clear))
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Button(onClick = onExit, modifier = Modifier.height(36.dp)) {
+                            Text(stringResource(R.string.measure_done))
+                        }
+                    }
+                }
+            }
+        } else {
+            val instruction = if (measurePoint1 == null) {
+                stringResource(R.string.measure_instruction_p1)
+            } else {
+                stringResource(R.string.measure_instruction_p2)
+            }
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
+                tonalElevation = 4.dp,
+                shadowElevation = 6.dp,
+                modifier = Modifier.padding(horizontal = 24.dp),
+            ) {
+                Row(
+                    modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Outlined.Straighten,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = instruction,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    if (measurePoint1 != null) {
+                        TextButton(onClick = onClear, modifier = Modifier.height(32.dp)) {
+                            Text(stringResource(R.string.measure_clear), style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                    IconButton(onClick = onExit, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.measure_done), modifier = Modifier.size(16.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeltaBadge(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = modifier,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BottomControls(
     renderMode: RenderMode,
+    isMeasuring: Boolean,
     onRenderMode: (RenderMode) -> Unit,
+    onToggleMeasure: () -> Unit,
     onResetView: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -327,7 +533,22 @@ private fun BottomControls(
                 }
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
+        FilledTonalIconButton(
+            onClick = onToggleMeasure,
+            colors = if (isMeasuring) {
+                IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                )
+            } else {
+                IconButtonDefaults.filledTonalIconButtonColors()
+            },
+            modifier = Modifier.size(48.dp),
+        ) {
+            Icon(Icons.Outlined.Straighten, contentDescription = stringResource(R.string.measure))
+        }
+        Spacer(Modifier.width(10.dp))
         FilledTonalIconButton(onClick = onResetView, modifier = Modifier.size(48.dp)) {
             Icon(Icons.Outlined.CenterFocusStrong, contentDescription = stringResource(R.string.reset_view))
         }

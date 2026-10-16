@@ -32,4 +32,12 @@
     <string name="download_as_new_file">Download as new file</string>
     <string name="file_saved">Saved to %1$s</string>
     <string name="error_saving">Failed to save file: %1$s</string>
+    <string name="measure">Measure</string>
+    <string name="measure_instruction_p1">Tap model to set first point</string>
+    <string name="measure_instruction_p2">Tap model to set second point</string>
+    <string name="measure_title">Measurement</string>
+    <string name="measure_distance">Distance</string>
+    <string name="measure_clear">Clear</string>
+    <string name="measure_done">Done</string>
+    <string name="measure_copied">Measurement copied to clipboard</string>
 </resources>
