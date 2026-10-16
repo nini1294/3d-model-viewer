@@ -131,6 +131,75 @@ class OrbitCamera {
         return if (len > 0f) floatArrayOf(v[0] / len, v[1] / len, v[2] / len) else v
     }
 
+    /**
+     * Unprojects screen coordinates [screenX], [screenY] (in pixels) into a 3D [Ray] in world coordinates.
+     */
+    @Synchronized
+    fun unprojectRay(screenX: Float, screenY: Float): Ray {
+        val view = FloatArray(16)
+        val proj = FloatArray(16)
+        val eye = FloatArray(3)
+        computeMatrices(view, proj, eye)
+
+        val vp = FloatArray(16)
+        val invVp = FloatArray(16)
+        Matrix.multiplyMM(vp, 0, proj, 0, view, 0)
+        if (!Matrix.invertM(invVp, 0, vp, 0)) {
+            val forward = normalize(floatArrayOf(target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]))
+            return Ray(eye[0], eye[1], eye[2], forward[0], forward[1], forward[2])
+        }
+
+        val ndcX = (2f * screenX / viewportWidth) - 1f
+        val ndcY = 1f - (2f * screenY / viewportHeight)
+
+        val nearPoint = FloatArray(4)
+        val farPoint = FloatArray(4)
+        Matrix.multiplyMV(nearPoint, 0, invVp, 0, floatArrayOf(ndcX, ndcY, -1f, 1f), 0)
+        Matrix.multiplyMV(farPoint, 0, invVp, 0, floatArrayOf(ndcX, ndcY, 1f, 1f), 0)
+
+        val nx = nearPoint[0] / nearPoint[3]
+        val ny = nearPoint[1] / nearPoint[3]
+        val nz = nearPoint[2] / nearPoint[3]
+
+        val fx = farPoint[0] / farPoint[3]
+        val fy = farPoint[1] / farPoint[3]
+        val fz = farPoint[2] / farPoint[3]
+
+        val dx = fx - nx
+        val dy = fy - ny
+        val dz = fz - nz
+        val len = sqrt(dx * dx + dy * dy + dz * dz)
+        val invLen = if (len > 0f) 1f / len else 1f
+
+        return Ray(eye[0], eye[1], eye[2], dx * invLen, dy * invLen, dz * invLen)
+    }
+
+    /**
+     * Projects a 3D world coordinate [x, y, z] to screen space pixels [screenX, screenY].
+     * Returns null if the point is behind the camera.
+     */
+    @Synchronized
+    fun projectToScreen(x: Float, y: Float, z: Float): FloatArray? {
+        val view = FloatArray(16)
+        val proj = FloatArray(16)
+        val eye = FloatArray(3)
+        computeMatrices(view, proj, eye)
+
+        val mvp = FloatArray(16)
+        Matrix.multiplyMM(mvp, 0, proj, 0, view, 0)
+
+        val clip = FloatArray(4)
+        Matrix.multiplyMV(clip, 0, mvp, 0, floatArrayOf(x, y, z, 1f), 0)
+        if (clip[3] <= 0f) return null
+
+        val ndcX = clip[0] / clip[3]
+        val ndcY = clip[1] / clip[3]
+
+        val screenX = (ndcX + 1f) * 0.5f * viewportWidth
+        val screenY = (1f - ndcY) * 0.5f * viewportHeight
+        return floatArrayOf(screenX, screenY)
+    }
+
     private companion object {
         const val FOV_Y_DEG = 40.0
         /** Looking from the front-right (+X, -Y), slightly above: the usual "slicer" default view. */

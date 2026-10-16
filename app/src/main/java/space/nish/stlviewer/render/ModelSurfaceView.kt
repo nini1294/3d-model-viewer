@@ -77,10 +77,27 @@ class ModelSurfaceView(context: Context) : GLSurfaceView(context) {
         requestRender()
     }
 
+    var isMeasureMode: Boolean = false
+    var onPointPicked: ((FloatArray) -> Unit)? = null
+
+    private val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
+    private var downX = 0f
+    private var downY = 0f
+    private var downTime = 0L
+    private var isDragging = false
+    private val pickExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "RaycastPicker").apply { isDaemon = true }
+    }
+
     fun setColors(model: FloatArray, background: FloatArray, darkBackground: Boolean) {
         renderer.modelColor = model
         renderer.backgroundColor = background
         renderer.darkBackground = darkBackground
+        requestRender()
+    }
+
+    fun setMeasurementPoints(p1: FloatArray?, p2: FloatArray?) {
+        renderer.setMeasurement(p1, p2)
         requestRender()
     }
 
@@ -111,10 +128,23 @@ class ModelSurfaceView(context: Context) : GLSurfaceView(context) {
         val y = sumY / count
 
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN, MotionEvent.ACTION_POINTER_UP -> {
+            MotionEvent.ACTION_DOWN -> {
+                downX = event.x
+                downY = event.y
+                downTime = event.eventTime
+                isDragging = false
+                lastX = x; lastY = y; lastPointerCount = count
+            }
+            MotionEvent.ACTION_POINTER_DOWN, MotionEvent.ACTION_POINTER_UP -> {
+                isDragging = true
                 lastX = x; lastY = y; lastPointerCount = count
             }
             MotionEvent.ACTION_MOVE -> {
+                val moveDx = event.x - downX
+                val moveDy = event.y - downY
+                if (moveDx * moveDx + moveDy * moveDy > touchSlop * touchSlop) {
+                    isDragging = true
+                }
                 if (count != lastPointerCount) {
                     lastX = x; lastY = y; lastPointerCount = count
                     return true
@@ -128,6 +158,29 @@ class ModelSurfaceView(context: Context) : GLSurfaceView(context) {
                     camera.pan(dx, dy)
                 }
                 requestRender()
+            }
+            MotionEvent.ACTION_UP -> {
+                val duration = event.eventTime - downTime
+                val moveDx = event.x - downX
+                val moveDy = event.y - downY
+                val isTap = !isDragging && (moveDx * moveDx + moveDy * moveDy <= touchSlop * touchSlop) && duration < 300
+                if (isTap && isMeasureMode) {
+                    val tapX = event.x
+                    val tapY = event.y
+                    val mesh = currentMesh
+                    if (mesh != null) {
+                        val ray = camera.unprojectRay(tapX, tapY)
+                        pickExecutor.execute {
+                            val hit = Raycaster.intersect(mesh, ray)
+                            if (hit != null) {
+                                val pt = floatArrayOf(hit.point[0], hit.point[1], hit.point[2])
+                                mainHandler.post {
+                                    onPointPicked?.invoke(pt)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         return true
