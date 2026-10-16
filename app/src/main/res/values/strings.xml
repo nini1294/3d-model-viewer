@@ -23,4 +23,13 @@
     <string name="info_load_time">Load time</string>
     <string name="info_units_note">3D models are unitless; values assume millimetres. Volume is only accurate for watertight meshes.</string>
     <string name="gestures_hint">Drag to rotate · two fingers to pan · pinch to zoom · double-tap to reset</string>
+    <string name="file_location">File location</string>
+    <string name="info_location">Location</string>
+    <string name="source_uri">Source URI</string>
+    <string name="copy_path">Copy path</string>
+    <string name="copy_uri">Copy URI</string>
+    <string name="location_copied">Location copied to clipboard</string>
+    <string name="download_as_new_file">Download as new file</string>
+    <string name="file_saved">Saved to %1$s</string>
+    <string name="error_saving">Failed to save file: %1$s</string>
 </resources>

@@ -6,9 +6,12 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import space.nish.stlviewer.R
 import space.nish.stlviewer.model.Mesh
 import space.nish.stlviewer.model.ModelParser
 import space.nish.stlviewer.render.RenderMode
+import space.nish.stlviewer.util.FileLocationHelper
+import space.nish.stlviewer.util.FileLocationInfo
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,13 +38,18 @@ data class LoadedModel(
     /** Size in bytes, or -1 if unknown. */
     val fileSize: Long,
     val loadTimeMs: Long,
-)
+    val locationInfo: FileLocationInfo,
+) {
+    val fileLocation: String get() = locationInfo.displayPath
+    val rawUri: String? get() = locationInfo.rawUri
+}
 
 data class ViewerUiState(
     val model: LoadedModel? = null,
     val loading: Boolean = false,
     val loadingName: String? = null,
     val error: String? = null,
+    val infoMessage: String? = null,
     val renderMode: RenderMode = RenderMode.SHADED,
     val showGrid: Boolean = true,
     val modelColor: ModelColor = ModelColor.Blue,
@@ -53,20 +61,40 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
     val state: StateFlow<ViewerUiState> = _state.asStateFlow()
 
     private var loadJob: Job? = null
+    private val cacheModelFile by lazy {
+        File(getApplication<Application>().cacheDir, "current_model.bin")
+    }
 
     fun load(uri: Uri) {
         loadJob?.cancel()
         val resolver = getApplication<Application>().contentResolver
-        _state.update { it.copy(loading = true, loadingName = null, error = null) }
+        _state.update { it.copy(loading = true, loadingName = null, error = null, infoMessage = null) }
         loadJob = viewModelScope.launch {
             try {
                 val loaded = withContext(Dispatchers.IO) {
                     val (name, size) = queryNameAndSize(resolver, uri)
+                    val location = FileLocationHelper.resolve(getApplication(), uri)
                     _state.update { it.copy(loadingName = name) }
+
+                    // Cache locally so downloading/saving is reliable even if transient URI permissions expire
+                    resolver.openInputStream(uri)?.use { input ->
+                        cacheModelFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    } ?: throw IOException("Unable to open the file")
+
+                    val effectiveSize = if (size > 0) size else cacheModelFile.length()
                     val start = System.nanoTime()
-                    val mesh = resolver.openInputStream(uri)?.use { ModelParser.parse(it, name, size) }
-                        ?: throw IOException("Unable to open the file")
-                    LoadedModel(mesh, name, size, (System.nanoTime() - start) / 1_000_000)
+                    val mesh = cacheModelFile.inputStream().use { ModelParser.parse(it, name, effectiveSize) }
+                    val loadTime = (System.nanoTime() - start) / 1_000_000
+
+                    LoadedModel(
+                        mesh = mesh,
+                        fileName = name,
+                        fileSize = effectiveSize,
+                        loadTimeMs = loadTime,
+                        locationInfo = location,
+                    )
                 }
                 _state.update { it.copy(model = loaded, loading = false, loadingName = null) }
             } catch (e: CancellationException) {
@@ -81,6 +109,32 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun downloadModel(destinationUri: Uri) {
+        val currentModel = _state.value.model ?: return
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val resolver = getApplication<Application>().contentResolver
+                    if (!cacheModelFile.exists()) {
+                        throw IOException("Model file is no longer in cache")
+                    }
+                    cacheModelFile.inputStream().use { input ->
+                        resolver.openOutputStream(destinationUri)?.use { output ->
+                            input.copyTo(output)
+                        } ?: throw IOException("Unable to open destination file for writing")
+                    }
+                }
+                _state.update {
+                    it.copy(infoMessage = getApplication<Application>().getString(R.string.file_saved, currentModel.fileName))
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(error = getApplication<Application>().getString(R.string.error_saving, e.message ?: "Unknown error"))
+                }
+            }
+        }
+    }
+
     private fun fail(message: String) {
         _state.update { it.copy(loading = false, loadingName = null, error = message) }
     }
@@ -89,13 +143,19 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun clearError() = _state.update { it.copy(error = null) }
 
+    fun clearInfoMessage() = _state.update { it.copy(infoMessage = null) }
+
     fun setRenderMode(mode: RenderMode) = _state.update { it.copy(renderMode = mode) }
 
     fun toggleGrid() = _state.update { it.copy(showGrid = !it.showGrid) }
 
     fun setModelColor(color: ModelColor) = _state.update { it.copy(modelColor = color) }
 
-    fun closeModel() = _state.update { it.copy(model = null) }
+    fun closeModel() {
+        loadJob?.cancel()
+        if (cacheModelFile.exists()) cacheModelFile.delete()
+        _state.update { it.copy(model = null) }
+    }
 
     private fun queryNameAndSize(resolver: ContentResolver, uri: Uri): Pair<String, Long> {
         var name: String? = null
