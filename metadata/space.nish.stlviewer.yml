@@ -2,7 +2,6 @@ Categories:
   - Graphics
 License: Apache-2.0
 AuthorName: nini1294
-WebSite: https://github.com/nini1294/3d-model-viewer
 SourceCode: https://github.com/nini1294/3d-model-viewer
 IssueTracker: https://github.com/nini1294/3d-model-viewer/issues
 Changelog: https://github.com/nini1294/3d-model-viewer/releases
@@ -13,14 +12,14 @@ RepoType: git
 Repo: https://github.com/nini1294/3d-model-viewer.git
 
 Builds:
-  - versionName: 0.3.0
-    versionCode: 3
-    commit: bb9231a057ea59fb18882858d08fe172cfbb9a22
+  - versionName: 0.5.0
+    versionCode: 5
+    commit: 9b1d6fe1aa7656cf6e30708ea0376f7dbca6f70e
     subdir: app
     gradle:
       - yes
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 0.3.0
-CurrentVersionCode: 3
+CurrentVersion: 0.5.0
+CurrentVersionCode: 5
